@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import streamlit as st
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 import requests
 import prepare_dataset  # auto-create dataset
 
@@ -35,7 +35,7 @@ def recognize_speech(file_path):
         return f"Error: {response.status_code}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC (Whisper API)")
+st.title("🍾 Product Verification POC (Whisper API, Safe Uploads)")
 st.write("Upload files OR test with sample Coca Cola / Pepsi dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
@@ -53,17 +53,29 @@ with tab1:
         with open(voice_path, "wb") as f:
             f.write(uploaded_voice.read())
 
-        st.image(img_path, caption="Uploaded Image", use_column_width=True)
-        img_result = classify_image(img_path)
-        st.write(f"🔎 Image recognition result: **{img_result}**")
+        # Safely open image
+        try:
+            img = Image.open(img_path).convert("RGB")
+            st.image(img, caption="Uploaded Image", use_column_width=True)
+            img_result = classify_image(img_path)
+            st.write(f"🔎 Image recognition result: **{img_result}**")
+        except UnidentifiedImageError:
+            st.error("❌ Uploaded file is not a valid image")
+            img_result = None
 
-        voice_result = recognize_speech(voice_path)
-        st.write(f"🎤 Voice recognition result: **{voice_result}**")
+        # Voice recognition
+        try:
+            voice_result = recognize_speech(voice_path)
+            st.write(f"🎤 Voice recognition result: **{voice_result}**")
+        except Exception as e:
+            st.error(f"❌ Failed to transcribe audio: {e}")
+            voice_result = None
 
-        if img_result.lower() in voice_result.lower():
-            st.success("✅ Product Verified")
-        else:
-            st.error("❌ Mismatch between image and voice")
+        if img_result and voice_result:
+            if img_result.lower() in voice_result.lower():
+                st.success("✅ Product Verified")
+            else:
+                st.error("❌ Mismatch between image and voice")
 
 with tab2:
     sample_img = st.selectbox("Select sample image", os.listdir("sample_data/images"))
