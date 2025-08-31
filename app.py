@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 from utils.image_checks import analyze_image
 from utils.stt_vosk import record_and_transcribe, analyze_transcript
-from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, RTCConfiguration
+from streamlit_webrtc import webrtc_streamer, RTCConfiguration
 
 st.set_page_config(page_title="Fake Liquor Detector PoC", layout="centered")
 st.title("🍾 Fake Liquor Detector — Render Free PoC")
@@ -10,7 +10,7 @@ st.title("🍾 Fake Liquor Detector — Render Free PoC")
 BASE = Path(__file__).parent
 LOGO_TEMPLATE = BASE / "sample_data" / "logo_template.png"
 
-tab1, tab2 = st.tabs(["📷 Image Check", "🎙️ Voice Check"])
+tab1, tab2, tab3 = st.tabs(["📷 Image Check", "🎙️ Voice Check", "🗣️ Simulate Voice"])
 
 # -------------------- Image Tab --------------------
 with tab1:
@@ -28,7 +28,7 @@ with tab1:
 # -------------------- Voice Tab --------------------
 with tab2:
     st.subheader("Record your voice")
-    st.caption("Click 'Start' below and speak for a few seconds. Browser audio is captured.")
+    st.caption("Click 'Start' and speak for a few seconds. Browser audio is captured live.")
     
     RTC_CONFIGURATION = RTCConfiguration({
         "iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]
@@ -43,11 +43,23 @@ with tab2:
     )
 
     if webrtc_ctx.state.playing:
-        # Dummy transcript for now
+        # Dummy transcript for PoC
         transcript = record_and_transcribe()
         result = analyze_transcript(transcript)
         st.text_area("Transcript", value=result["transcript"], height=100)
         if result["verdict"] == "OK":
+            st.success("✅ Voice OK")
+        else:
+            st.error("❌ Voice SUSPICIOUS")
+
+# -------------------- Simulate Voice Tab --------------------
+with tab3:
+    st.subheader("Simulate voice check")
+    if st.button("Simulate Voice Check"):
+        transcript = record_and_transcribe()  # dummy
+        result = analyze_transcript(transcript)
+        st.text_area("Transcript", value=result["transcript"], height=100)
+        if result["verdict"]=="OK":
             st.success("✅ Voice OK")
         else:
             st.error("❌ Voice SUSPICIOUS")
