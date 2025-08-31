@@ -1,7 +1,7 @@
 streamlit==1.36.0
+pytesseract
 Pillow
 numpy
 requests
 gTTS==2.5.1
 ffmpeg-python==0.2.0
-
