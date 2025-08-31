@@ -5,5 +5,6 @@ services:
     plan: free
     buildCommand: |
       pip install --upgrade --no-cache-dir -r requirements.txt
-      python -c "import easyocr; easyocr.Reader(['en'])"  # pre-download OCR model
+      python -c "import easyocr; easyocr.Reader(['en'])"
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+
