@@ -1,0 +1,46 @@
+{
+  "image": {
+    "hist_min_corr": 0.7,
+    "edge_density_max_diff": 0.2,
+    "blur_min_score": 12.0,
+    "weights": {
+      "hist": 0.5,
+      "edge": 0.3,
+      "blur": 0.2
+    }
+  },
+  "voice": {
+    "keywords_suspicious": [
+      "seal",
+      "tamper",
+      "tampered",
+      "crooked",
+      "peeling",
+      "smells",
+      "fake",
+      "counterfeit",
+      "barcode unreadable",
+      "no tax",
+      "missing stamp",
+      "scratch",
+      "refill",
+      "bought from street"
+    ],
+    "keywords_ok": [
+      "authorized",
+      "intact",
+      "clear",
+      "present",
+      "scans"
+    ],
+    "kw_weight": 1.0
+  },
+  "fusion": {
+    "w_image": 0.6,
+    "w_voice": 0.4
+  },
+  "risk_thresholds": {
+    "pass": 0.35,
+    "review": 0.65
+  }
+}
