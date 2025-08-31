@@ -4,6 +4,9 @@ import streamlit as st
 from PIL import Image, UnidentifiedImageError
 import pytesseract
 
+# Set Tesseract path
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
+
 # Load dataset
 with open("sample_data/dataset.json", "r") as f:
     dataset = json.load(f)
@@ -13,7 +16,6 @@ st.title("📦 Product Verification via OCR")
 # Upload image
 uploaded_img = st.file_uploader("Upload product image", type=["jpg", "png", "jpeg"])
 
-# Text output box for OCR result
 ocr_text_box = st.empty()
 match_result_box = st.empty()
 
@@ -44,5 +46,5 @@ if uploaded_img:
 
         except UnidentifiedImageError:
             match_result_box.error("❌ Uploaded file is not a valid image")
-        except pytesseract.TesseractNotFoundError:
-            match_result_box.error("❌ Tesseract not installed. Ensure render.yaml installs it correctly.")
+        except Exception as e:
+            match_result_box.error(f"❌ OCR failed: {e}")
