@@ -1,9 +1,7 @@
-import os
-
-VOSK_MODEL_PATH = os.path.join(os.path.dirname(__file__), "../models/vosk-tiny-dummy")
-
-def record_and_transcribe(duration=5, samplerate=16000):
-    # Dummy transcript
+def record_and_transcribe():
+    """
+    Dummy transcript. Replace with real STT if needed.
+    """
     return "Bottle looks intact and authorized"
 
 def analyze_transcript(transcript):
