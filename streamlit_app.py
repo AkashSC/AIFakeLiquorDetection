@@ -3,14 +3,13 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 import speech_recognition as sr
-import prepare_dataset  # auto-creates dataset
+import prepare_dataset  # auto-create dataset
 
 # --- Image comparison (histogram-based) ---
 def classify_image(img_path):
     img = Image.open(img_path).resize((224, 224)).convert("RGB")
     hist = np.array(img.histogram())
 
-    # Load reference histograms
     coca_ref = Image.open("sample_data/images/coca_cola1.jpg").resize((224, 224)).convert("RGB")
     pepsi_ref = Image.open("sample_data/images/pepsi1.jpg").resize((224, 224)).convert("RGB")
 
@@ -33,7 +32,7 @@ def recognize_speech(file_path):
         return f"Error: {e}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC (Lightweight Version)")
+st.title("🍾 Product Verification POC (Python 3.10, Lightweight)")
 st.write("Upload files OR test with sample Coca Cola / Pepsi dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
