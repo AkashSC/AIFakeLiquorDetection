@@ -2,7 +2,7 @@ import os
 import numpy as np
 import streamlit as st
 from PIL import Image
-import speech_recognition as sr
+import requests
 import prepare_dataset  # auto-create dataset
 
 # --- Image comparison (histogram-based) ---
@@ -16,23 +16,26 @@ def classify_image(img_path):
     coca_score = np.linalg.norm(hist - np.array(coca_ref.histogram()))
     pepsi_score = np.linalg.norm(hist - np.array(pepsi_ref.histogram()))
 
-    if coca_score < pepsi_score:
-        return "Coca Cola"
-    else:
-        return "Pepsi"
+    return "Coca Cola" if coca_score < pepsi_score else "Pepsi"
 
-# --- Speech-to-text ---
+# --- Speech-to-text using HuggingFace Whisper API ---
+HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-small"
+HF_HEADERS = {
+    "Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"  # ← replace with your free API key
+}
+
 def recognize_speech(file_path):
-    r = sr.Recognizer()
-    with sr.AudioFile(file_path) as source:
-        audio = r.record(source)
-    try:
-        return r.recognize_google(audio)
-    except Exception as e:
-        return f"Error: {e}"
+    with open(file_path, "rb") as f:
+        audio_bytes = f.read()
+    response = requests.post(HF_API_URL, headers=HF_HEADERS, files={"file": audio_bytes})
+    if response.status_code == 200:
+        res_json = response.json()
+        return res_json.get("text", "Could not transcribe")
+    else:
+        return f"Error: {response.status_code}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC (Python 3.10, Lightweight)")
+st.title("🍾 Product Verification POC (Whisper API)")
 st.write("Upload files OR test with sample Coca Cola / Pepsi dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
