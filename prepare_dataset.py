@@ -7,10 +7,10 @@ os.makedirs("sample_data/voices", exist_ok=True)
 
 # --- Fixed sample logos (PNG/JPG) ---
 images = {
-    "coca_cola1.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Coca-Cola_logo.png/320px-Coca-Cola_logo.png",
-    "coca_cola2.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Coca-Cola_bottle_cap.jpg/320px-Coca-Cola_bottle_cap.jpg",
-    "pepsi1.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Pepsi_logo_2014.svg/320px-Pepsi_logo_2014.svg.png",
-    "pepsi2.jpg": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Pepsi_bottle_cap.jpg/320px-Pepsi_bottle_cap.jpg",
+    "coca_cola1.png": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Coca-Cola_logo.png/320px-Coca-Cola_logo.png",
+    "coca_cola2.png": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Coca-Cola_bottle_cap.jpg/320px-Coca-Cola_bottle_cap.jpg",
+    "pepsi1.png": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Pepsi_logo_2014.svg/320px-Pepsi_logo_2014.svg.png",
+    "pepsi2.png": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Pepsi_bottle_cap.jpg/320px-Pepsi_bottle_cap.jpg",
 }
 
 for filename, url in images.items():
