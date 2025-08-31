@@ -1,30 +1,28 @@
 import os
+import numpy as np
 import streamlit as st
-from torchvision import models, transforms
 from PIL import Image
-import torch
 import speech_recognition as sr
-import prepare_dataset  # auto-create dataset
+import prepare_dataset  # auto-creates dataset
 
-# --- Image classifier (ResNet18 pretrained) ---
-model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-model.eval()
+# --- Image comparison (histogram-based) ---
+def classify_image(img_path):
+    img = Image.open(img_path).resize((224, 224)).convert("RGB")
+    hist = np.array(img.histogram())
 
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-])
+    # Load reference histograms
+    coca_ref = Image.open("sample_data/images/coca_cola1.jpg").resize((224, 224)).convert("RGB")
+    pepsi_ref = Image.open("sample_data/images/pepsi1.jpg").resize((224, 224)).convert("RGB")
 
-# --- Helper: predict image ---
-def predict_image(img_path):
-    img = Image.open(img_path).convert("RGB")
-    img_t = transform(img).unsqueeze(0)
-    with torch.no_grad():
-        out = model(img_t)
-        _, pred = torch.max(out, 1)
-    return f"Predicted class index: {pred.item()}"
+    coca_score = np.linalg.norm(hist - np.array(coca_ref.histogram()))
+    pepsi_score = np.linalg.norm(hist - np.array(pepsi_ref.histogram()))
 
-# --- Helper: speech-to-text ---
+    if coca_score < pepsi_score:
+        return "Coca Cola"
+    else:
+        return "Pepsi"
+
+# --- Speech-to-text ---
 def recognize_speech(file_path):
     r = sr.Recognizer()
     with sr.AudioFile(file_path) as source:
@@ -35,8 +33,8 @@ def recognize_speech(file_path):
         return f"Error: {e}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC")
-st.write("Upload an image & voice OR select from sample dataset to test.")
+st.title("🍾 Product Verification POC (Lightweight Version)")
+st.write("Upload files OR test with sample Coca Cola / Pepsi dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
 
@@ -45,21 +43,25 @@ with tab1:
     uploaded_voice = st.file_uploader("Upload voice sample", type=["wav", "mp3"])
 
     if uploaded_img and uploaded_voice:
-        # Save temp files
-        img_path = f"temp_image.jpg"
+        img_path = "temp_image.jpg"
         with open(img_path, "wb") as f:
             f.write(uploaded_img.read())
 
-        voice_path = f"temp_voice.wav"
+        voice_path = "temp_voice.wav"
         with open(voice_path, "wb") as f:
             f.write(uploaded_voice.read())
 
         st.image(img_path, caption="Uploaded Image", use_column_width=True)
-        img_result = predict_image(img_path)
-        st.write(f"🔎 Image recognition result: {img_result}")
+        img_result = classify_image(img_path)
+        st.write(f"🔎 Image recognition result: **{img_result}**")
 
         voice_result = recognize_speech(voice_path)
-        st.write(f"🎤 Voice recognition result: {voice_result}")
+        st.write(f"🎤 Voice recognition result: **{voice_result}**")
+
+        if img_result.lower() in voice_result.lower():
+            st.success("✅ Product Verified")
+        else:
+            st.error("❌ Mismatch between image and voice")
 
 with tab2:
     sample_img = st.selectbox("Select sample image", os.listdir("sample_data/images"))
@@ -70,15 +72,13 @@ with tab2:
         voice_path = os.path.join("sample_data/voices", sample_voice)
 
         st.image(img_path, caption=sample_img, use_column_width=True)
-        img_result = predict_image(img_path)
-        st.write(f"🔎 Image recognition result: {img_result}")
+        img_result = classify_image(img_path)
+        st.write(f"🔎 Image recognition result: **{img_result}**")
 
         voice_result = recognize_speech(voice_path)
-        st.write(f"🎤 Voice recognition result: {voice_result}")
+        st.write(f"🎤 Voice recognition result: **{voice_result}**")
 
-        if "coca" in sample_img.lower() and "coca" in voice_result.lower():
-            st.success("✅ Product Verified (Coca Cola)")
-        elif "pepsi" in sample_img.lower() and "pepsi" in voice_result.lower():
-            st.success("✅ Product Verified (Pepsi)")
+        if img_result.lower() in voice_result.lower():
+            st.success("✅ Product Verified")
         else:
             st.error("❌ Mismatch between image and voice")
