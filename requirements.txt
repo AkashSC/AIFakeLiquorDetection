@@ -2,3 +2,4 @@ streamlit==1.36.0
 easyocr
 torch==2.5.0
 Pillow
+numpy>=1.26
