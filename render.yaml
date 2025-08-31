@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: product-match-poc
+    name: product-match-free
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
