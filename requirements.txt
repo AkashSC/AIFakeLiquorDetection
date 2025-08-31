@@ -1,6 +1,7 @@
 streamlit==1.36.0
-torch
-torchvision
+torch==2.2.0
+torchvision==0.17.0
 Pillow
-speechrecognition
-
+requests
+gTTS==2.5.1
+ffmpeg-python==0.2.0
