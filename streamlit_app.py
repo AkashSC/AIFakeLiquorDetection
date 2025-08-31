@@ -1,58 +1,84 @@
+import os
 import streamlit as st
+from torchvision import models, transforms
 from PIL import Image
 import torch
-import torchvision.transforms as transforms
-from torchvision.models import resnet18, ResNet18_Weights
 import speech_recognition as sr
-import io
+import prepare_dataset  # auto-create dataset
 
-st.set_page_config(page_title="Product Match POC", layout="centered")
-st.title("🧪 Product Match Checker (Render Free Tier)")
-
-# ---------------- Load ResNet18 with DEFAULT weights ----------------
-weights = ResNet18_Weights.DEFAULT
-model = resnet18(weights=weights)
+# --- Image classifier (ResNet18 pretrained) ---
+model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
 model.eval()
-labels = weights.meta["categories"]
 
-# ---------------- Image preprocessing ----------------
-preprocess = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                         std=[0.229, 0.224, 0.225])
 ])
 
-# ---------------- Upload Inputs ----------------
-image_file = st.file_uploader("Upload Product Image", type=["jpg","jpeg","png"])
-audio_file = st.file_uploader("Upload Voice File", type=["wav","mp3"], help="Say the product name or description")
+# --- Helper: predict image ---
+def predict_image(img_path):
+    img = Image.open(img_path).convert("RGB")
+    img_t = transform(img).unsqueeze(0)
+    with torch.no_grad():
+        out = model(img_t)
+        _, pred = torch.max(out, 1)
+    return f"Predicted class index: {pred.item()}"
 
-if st.button("Check Product") and image_file and audio_file:
-    with st.spinner("Processing..."):
-        # Image recognition
-        image = Image.open(image_file).convert("RGB")
-        input_tensor = preprocess(image).unsqueeze(0)
-        with torch.no_grad():
-            outputs = model(input_tensor)
-            _, predicted = torch.max(outputs, 1)
-        predicted_label = labels[predicted.item()]
+# --- Helper: speech-to-text ---
+def recognize_speech(file_path):
+    r = sr.Recognizer()
+    with sr.AudioFile(file_path) as source:
+        audio = r.record(source)
+    try:
+        return r.recognize_google(audio)
+    except Exception as e:
+        return f"Error: {e}"
 
-        # Speech-to-text
-        recognizer = sr.Recognizer()
-        audio_bytes = audio_file.read()
-        audio_data = sr.AudioFile(io.BytesIO(audio_bytes))
-        with audio_data as source:
-            audio = recognizer.record(source)
-        try:
-            voice_text = recognizer.recognize_google(audio)
-        except:
-            voice_text = "Could not recognize speech"
+# --- UI ---
+st.title("🍾 Product Verification POC")
+st.write("Upload an image & voice OR select from sample dataset to test.")
 
-        # Compare
-        match = "✅ Product matches" if predicted_label.lower() in voice_text.lower() else "❌ Product does not match"
+tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
 
-    st.success("✅ Analysis Complete!")
-    st.write("**Image Label:**", predicted_label)
-    st.write("**Voice Text:**", voice_text)
-    st.write("**Match Result:**", match)
+with tab1:
+    uploaded_img = st.file_uploader("Upload product image", type=["jpg", "png", "jpeg"])
+    uploaded_voice = st.file_uploader("Upload voice sample", type=["wav", "mp3"])
+
+    if uploaded_img and uploaded_voice:
+        # Save temp files
+        img_path = f"temp_image.jpg"
+        with open(img_path, "wb") as f:
+            f.write(uploaded_img.read())
+
+        voice_path = f"temp_voice.wav"
+        with open(voice_path, "wb") as f:
+            f.write(uploaded_voice.read())
+
+        st.image(img_path, caption="Uploaded Image", use_column_width=True)
+        img_result = predict_image(img_path)
+        st.write(f"🔎 Image recognition result: {img_result}")
+
+        voice_result = recognize_speech(voice_path)
+        st.write(f"🎤 Voice recognition result: {voice_result}")
+
+with tab2:
+    sample_img = st.selectbox("Select sample image", os.listdir("sample_data/images"))
+    sample_voice = st.selectbox("Select sample voice", os.listdir("sample_data/voices"))
+
+    if st.button("Run Sample Test"):
+        img_path = os.path.join("sample_data/images", sample_img)
+        voice_path = os.path.join("sample_data/voices", sample_voice)
+
+        st.image(img_path, caption=sample_img, use_column_width=True)
+        img_result = predict_image(img_path)
+        st.write(f"🔎 Image recognition result: {img_result}")
+
+        voice_result = recognize_speech(voice_path)
+        st.write(f"🎤 Voice recognition result: {voice_result}")
+
+        if "coca" in sample_img.lower() and "coca" in voice_result.lower():
+            st.success("✅ Product Verified (Coca Cola)")
+        elif "pepsi" in sample_img.lower() and "pepsi" in voice_result.lower():
+            st.success("✅ Product Verified (Pepsi)")
+        else:
+            st.error("❌ Mismatch between image and voice")
