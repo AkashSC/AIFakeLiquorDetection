@@ -1,3 +1,7 @@
 streamlit
 pillow
 numpy
+vosk
+sounddevice
+pyaudio
+streamlit-audiorecorder
