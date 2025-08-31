@@ -1,5 +1,5 @@
 streamlit
-tensorflow
-pillow
-numpy
+torch
+transformers
+Pillow
 
