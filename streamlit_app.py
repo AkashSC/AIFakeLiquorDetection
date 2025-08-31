@@ -3,7 +3,7 @@ import numpy as np
 import streamlit as st
 from PIL import Image, UnidentifiedImageError
 import requests
-import prepare_dataset  # auto-create dataset
+import prepare_dataset  # auto-create sample files
 
 # --- Image comparison (histogram-based) ---
 def classify_image(img_path):
@@ -21,7 +21,7 @@ def classify_image(img_path):
 # --- Speech-to-text using HuggingFace Whisper API ---
 HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-small"
 HF_HEADERS = {
-    "Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"  # ← replace with your free API key
+    "Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"  # ← replace with free API key
 }
 
 def recognize_speech(file_path):
@@ -35,8 +35,8 @@ def recognize_speech(file_path):
         return f"Error: {response.status_code}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC (Whisper API, Safe Uploads)")
-st.write("Upload files OR test with sample Coca Cola / Pepsi dataset.")
+st.title("🍾 Product Verification POC (Manual Upload)")
+st.write("Upload files OR test with sample dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
 
@@ -53,7 +53,6 @@ with tab1:
         with open(voice_path, "wb") as f:
             f.write(uploaded_voice.read())
 
-        # Safely open image
         try:
             img = Image.open(img_path).convert("RGB")
             st.image(img, caption="Uploaded Image", use_column_width=True)
@@ -63,7 +62,6 @@ with tab1:
             st.error("❌ Uploaded file is not a valid image")
             img_result = None
 
-        # Voice recognition
         try:
             voice_result = recognize_speech(voice_path)
             st.write(f"🎤 Voice recognition result: **{voice_result}**")
