@@ -1,9 +1,10 @@
-services:
+vices:
   - type: web
     name: product-check
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
+    envVars:
+      - key: PIP_NO_DEPENDENCIES
+        value: "false"
+    buildCommand: pip install -r requirements.txt --upgrade --no-cache-dir
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
-
-
