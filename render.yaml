@@ -7,4 +7,3 @@ services:
       apt-get update && apt-get install -y tesseract-ocr ffmpeg
       pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
-
