@@ -2,6 +2,12 @@ import streamlit as st
 import torch
 from transformers import CLIPProcessor, CLIPModel, WhisperProcessor, WhisperForConditionalGeneration
 from PIL import Image
+import os
+
+# ---------------- Render-friendly config ----------------
+st.set_page_config(page_title="Product Match POC", layout="centered")
+os.environ["STREAMLIT_GATHER_USAGE_STATS"] = "false"
+os.environ["BROWSER"] = "none"
 
 # ---------------- CLIP for image-text matching ----------------
 clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch16")
@@ -15,7 +21,7 @@ whisper_processor = WhisperProcessor.from_pretrained(whisper_model_name)
 st.title("🧪 Product Match Checker (POC)")
 st.write("Upload a product image and a voice description. The system will check if they match.")
 
-# Upload inputs
+# ---------------- Upload Inputs ----------------
 image_file = st.file_uploader("Upload Product Image", type=["jpg", "jpeg", "png"])
 audio_file = st.file_uploader("Upload Voice File", type=["wav", "mp3"], help="Say the product name or description")
 
@@ -38,3 +44,7 @@ if st.button("Check Product") and image_file and audio_file:
     st.write("**Voice Text:**", voice_text)
     st.write("**Similarity Score:**", similarity)
     st.write("**Match Result:**", match)
+
+# ---------------- Streamlit Info ----------------
+st.markdown("---")
+st.markdown("**Note:** Running on Render Free Tier. Make sure to open the public URL provided by Render, not 0.0.0.0.")
