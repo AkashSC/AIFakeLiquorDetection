@@ -3,3 +3,4 @@ services:
     name: fake-liquor-docker
     env: docker
     plan: free
+
