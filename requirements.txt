@@ -2,8 +2,6 @@
 numpy>=1.26
 streamlit==1.36.0
 easyocr
-torch==2.5.0
+torch==2.6.0
 torchvision==0.21.0
 Pillow
-
-
