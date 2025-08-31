@@ -2,9 +2,10 @@ import streamlit as st
 from pathlib import Path
 from utils.image_checks import analyze_image
 from utils.stt_vosk import record_and_transcribe, analyze_transcript
+from streamlit_audiorecorder import st_audiorecorder  # pip install streamlit-audiorecorder
 
 st.set_page_config(page_title="Fake Liquor Detector PoC", layout="centered")
-st.title("🍾 Fake Liquor Detector — PoC")
+st.title("🍾 Fake Liquor Detector — PoC (Render Free)")
 
 BASE = Path(__file__).parent
 LOGO_TEMPLATE = BASE / "sample_data" / "logo_template.png"
@@ -24,11 +25,13 @@ with tab1:
         st.json(details)
 
 with tab2:
-    st.subheader("Push-to-talk Voice Check")
-    st.caption("Click 'Record' and speak for ~5 seconds. Vosk STT will transcribe and check for suspicious keywords.")
-    if st.button("🎙️ Record"):
-        st.info("Recording...")
-        transcript = record_and_transcribe(duration=5)
+    st.subheader("Record your voice")
+    st.caption("Click 'Start Recording' below, speak for a few seconds, then click 'Stop'.")
+    
+    audio_data = st_audiorecorder("audio", format="wav", max_length=5)
+    if audio_data is not None:
+        st.audio(audio_data)  # playback
+        transcript = record_and_transcribe()
         result = analyze_transcript(transcript)
         st.text_area("Transcript", value=result["transcript"], height=100)
         if result["verdict"]=="OK":
