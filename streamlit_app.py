@@ -3,15 +3,14 @@ import numpy as np
 import streamlit as st
 from PIL import Image, UnidentifiedImageError
 import requests
-import prepare_dataset  # auto-create sample files
 
 # --- Image comparison (histogram-based) ---
 def classify_image(img_path):
-    img = Image.open(img_path).resize((224, 224)).convert("RGB")
+    img = Image.open(img_path).resize((50, 50)).convert("RGB")
     hist = np.array(img.histogram())
 
-    coca_ref = Image.open("sample_data/images/coca_cola1.jpg").resize((224, 224)).convert("RGB")
-    pepsi_ref = Image.open("sample_data/images/pepsi1.jpg").resize((224, 224)).convert("RGB")
+    coca_ref = Image.open("sample_data/images/coca_cola1.jpg").resize((50, 50)).convert("RGB")
+    pepsi_ref = Image.open("sample_data/images/pepsi1.jpg").resize((50, 50)).convert("RGB")
 
     coca_score = np.linalg.norm(hist - np.array(coca_ref.histogram()))
     pepsi_score = np.linalg.norm(hist - np.array(pepsi_ref.histogram()))
@@ -21,7 +20,7 @@ def classify_image(img_path):
 # --- Speech-to-text using HuggingFace Whisper API ---
 HF_API_URL = "https://api-inference.huggingface.co/models/openai/whisper-small"
 HF_HEADERS = {
-    "Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"  # ← replace with free API key
+    "Authorization": "Bearer YOUR_HUGGINGFACE_API_KEY"  # ← replace with your free API key
 }
 
 def recognize_speech(file_path):
@@ -35,11 +34,12 @@ def recognize_speech(file_path):
         return f"Error: {response.status_code}"
 
 # --- UI ---
-st.title("🍾 Product Verification POC (Manual Upload)")
+st.title("🍾 Product Verification POC")
 st.write("Upload files OR test with sample dataset.")
 
 tab1, tab2 = st.tabs(["🔼 Upload Files", "📂 Use Sample Data"])
 
+# ---- Tab 1: Upload Files ----
 with tab1:
     uploaded_img = st.file_uploader("Upload product image", type=["jpg", "png", "jpeg"])
     uploaded_voice = st.file_uploader("Upload voice sample", type=["wav", "mp3"])
@@ -75,6 +75,7 @@ with tab1:
             else:
                 st.error("❌ Mismatch between image and voice")
 
+# ---- Tab 2: Sample Data ----
 with tab2:
     sample_img = st.selectbox("Select sample image", os.listdir("sample_data/images"))
     sample_voice = st.selectbox("Select sample voice", os.listdir("sample_data/voices"))
