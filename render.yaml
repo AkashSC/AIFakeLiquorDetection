@@ -3,6 +3,7 @@ services:
     name: product-check
     env: python
     plan: free
-    buildCommand: pip install --upgrade --no-cache-dir -r requirements.txt
+    buildCommand: |
+      pip install --upgrade --no-cache-dir -r requirements.txt
+      python -c "import easyocr; easyocr.Reader(['en'])"  # pre-download OCR model
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
-
