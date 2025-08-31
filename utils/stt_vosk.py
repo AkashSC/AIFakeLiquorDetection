@@ -1,15 +1,15 @@
-import os
+import streamlit as st
+from utils.stt_vosk import analyze_transcript
 
-# Dummy model path
-VOSK_MODEL_PATH = os.path.join(os.path.dirname(__file__), "../models/vosk-tiny-dummy")
+st.title("🎙️ Voice Check (Dummy Vosk)")
 
-def record_and_transcribe(duration=5, samplerate=16000):
-    # Instead of real Vosk STT, return a fixed transcript
-    return "Bottle looks intact and authorized"
-
-def analyze_transcript(transcript):
-    t = transcript.lower()
-    SUSPICIOUS = ["tamper", "crooked", "peeling", "fake", "counterfeit", "unreadable", "missing", "refill", "street"]
-    sus_hits = any(k in t for k in SUSPICIOUS)
-    verdict = "SUSPICIOUS" if sus_hits else "OK"
-    return {"verdict": verdict, "transcript": transcript}
+audio_data = st.audio_recorder(key="audio", format="wav", max_length=5)  # 5 sec max
+if audio_data is not None:
+    st.audio(audio_data)  # playback
+    transcript = "Bottle looks intact and authorized"  # dummy
+    result = analyze_transcript(transcript)
+    st.text_area("Transcript", value=result["transcript"], height=100)
+    if result["verdict"]=="OK":
+        st.success("✅ Voice OK")
+    else:
+        st.error("❌ Voice SUSPICIOUS")
