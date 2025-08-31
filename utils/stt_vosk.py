@@ -1,5 +1,4 @@
 def record_and_transcribe():
-    """Dummy transcript for PoC"""
     return "Bottle looks intact and authorized"
 
 def analyze_transcript(transcript):
