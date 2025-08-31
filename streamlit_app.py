@@ -4,26 +4,26 @@ import streamlit as st
 from PIL import Image, UnidentifiedImageError
 import pytesseract
 
+# ---------------------------
 # Load dataset
+# ---------------------------
 with open("sample_data/dataset.json", "r") as f:
     dataset = json.load(f)
 
+# ---------------------------
+# Streamlit UI
+# ---------------------------
 st.title("📦 Product Verification via OCR")
 
-# Upload files
+# Upload product image
 uploaded_img = st.file_uploader("Upload product image", type=["jpg", "png", "jpeg"])
-uploaded_voice = st.file_uploader("Upload voice sample", type=["wav", "mp3"])
 
-if uploaded_img and uploaded_voice:
+if uploaded_img:
     if st.button("Verify Product"):
-        # Save uploaded files temporarily
+        # Save uploaded file temporarily
         img_path = "temp_image.jpg"
         with open(img_path, "wb") as f:
             f.write(uploaded_img.read())
-
-        voice_path = "temp_voice.wav"
-        with open(voice_path, "wb") as f:
-            f.write(uploaded_voice.read())
 
         # --- OCR ---
         try:
@@ -35,7 +35,7 @@ if uploaded_img and uploaded_voice:
             st.error("❌ Uploaded file is not a valid image")
             ocr_text = None
 
-        # --- Verification against dataset ---
+        # --- Compare with dataset ---
         if ocr_text:
             match_dataset = None
             for entry in dataset:
