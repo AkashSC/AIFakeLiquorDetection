@@ -6,8 +6,8 @@ import pandas as pd
 API_KEY = "helloworld"  # replace with your own for production
 
 sample_data = pd.DataFrame({
-    "Brand": ["Kingfisher", "Corona", "Budweiser"],
-    "Keyword": ["ORIGINAL", "MEXICO", "USA"]
+    "Brand": ["Kingfisher", "Corona", "Budweiser","Coca Cola"],
+    "Keyword": ["ORIGINAL", "MEXICO", "USA", "USA"]
 })
 
 st.set_page_config(page_title="Fake Liquor Detection", page_icon="🍺")
