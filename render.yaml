@@ -1,10 +1,12 @@
 services:
   - type: web
-    name: product-check
+    name: liquor-ocr
     env: python
     plan: free
     buildCommand: |
-      pip install --upgrade --no-cache-dir -r requirements.txt
-      python -c "import easyocr; easyocr.Reader(['en'])"
+      pip install --upgrade pip
+      pip install --no-cache-dir -r requirements.txt
+      python -c "import easyocr; easyocr.Reader(['en'], gpu=False)"
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+
 
