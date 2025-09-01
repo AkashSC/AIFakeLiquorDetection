@@ -1,8 +1,7 @@
 streamlit==1.32.0
-pandas
-Pillow
-pytesseract
-opencv-python-headless
+pandas==2.0.3
+Pillow==10.2.0
+pytesseract==0.3.10
 
 
 
