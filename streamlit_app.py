@@ -1,31 +1,42 @@
-import easyocr
 import streamlit as st
-from PIL import Image
-import numpy as np
+import requests
+import pandas as pd
 
-st.set_page_config(page_title="Fake Liquor Detection", layout="centered")
+# Free demo API key from OCR.Space
+API_KEY = "helloworld"  # replace with your own for production
 
-st.title("🍾 Fake Liquor Detection with OCR")
+sample_data = pd.DataFrame({
+    "Brand": ["Kingfisher", "Corona", "Budweiser"],
+    "Keyword": ["ORIGINAL", "MEXICO", "USA"]
+})
 
-# Initialize EasyOCR reader once
-reader = easyocr.Reader(['en'])
+st.set_page_config(page_title="Fake Liquor Detection", page_icon="🍺")
+st.title("🍺 Fake Liquor Detection (OCR via API)")
 
-uploaded_file = st.file_uploader("Upload product label", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload label image", type=["jpg", "jpeg", "png"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Label", use_container_width=True)
+if uploaded_file:
+    st.image(uploaded_file, caption="Uploaded Label", use_column_width=True)
 
     if st.button("Verify Product"):
-        with st.spinner("Extracting text..."):
-            result = reader.readtext(np.array(image))
+        files = {'file': uploaded_file.getvalue()}
+        response = requests.post(
+            "https://api.ocr.space/parse/image",
+            files=files,
+            data={"apikey": API_KEY, "language": "eng"}
+        )
 
-        extracted_text = " ".join([res[1] for res in result])
-        st.subheader("Extracted Text:")
+        result = response.json()
+        extracted_text = result["ParsedResults"][0]["ParsedText"]
+        st.subheader("Extracted Text")
         st.write(extracted_text)
 
-        # Dummy verification step
-        if "ORIGINAL" in extracted_text.upper():
-            st.success("✅ Product verified as authentic!")
+        # Check for keyword match
+        match = sample_data[sample_data["Keyword"].apply(
+            lambda x: x.upper() in extracted_text.upper()
+        )]
+
+        if not match.empty:
+            st.success(f"✅ Verified! Matched with {match.iloc[0]['Brand']}")
         else:
-            st.error("⚠️ Warning: Product may be counterfeit.")
+            st.error("⚠️ No match found. Possible counterfeit.")
