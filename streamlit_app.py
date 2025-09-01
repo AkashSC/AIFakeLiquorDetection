@@ -1,45 +1,66 @@
 import streamlit as st
-import easyocr
 import pandas as pd
-import tempfile
-import os
+from PIL import Image
+import io
 
-# Sample dataset (you can replace with DB or CSV later)
-VALID_PRODUCTS = {
-    "WHISKY123": "Original Brand Whisky",
-    "VODKA456": "Premium Vodka",
-    "RUM789": "Dark Rum"
-}
+# -------------------------------
+# Load dataset (sample CSV of products)
+# -------------------------------
+@st.cache_data
+def load_dataset():
+    # Dataset file: sample_dataset.csv
+    return pd.read_csv("sample_dataset.csv")
 
-st.title("🍾 Fake Liquor Detection (OCR Verification)")
+dataset = load_dataset()
 
-uploaded_file = st.file_uploader("Upload product label image", type=["jpg", "jpeg", "png"])
+# -------------------------------
+# OCR Setup
+# -------------------------------
+try:
+    import easyocr
+    reader = easyocr.Reader(['en'], gpu=False)
+    OCR_ENGINE = "easyocr"
+except Exception:
+    import pytesseract
+    OCR_ENGINE = "pytesseract"
+
+def run_ocr(image_bytes):
+    if OCR_ENGINE == "easyocr":
+        results = reader.readtext(image_bytes)
+        text = " ".join([res[1] for res in results])
+    else:
+        img = Image.open(io.BytesIO(image_bytes))
+        text = pytesseract.image_to_string(img)
+    return text.strip()
+
+# -------------------------------
+# Streamlit UI
+# -------------------------------
+st.set_page_config(page_title="🧾 Product Verification OCR", layout="centered")
+st.title("🧾 Product Verification via OCR")
+
+uploaded_file = st.file_uploader("📤 Upload product image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    # Save to temp file
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_file:
-        tmp_file.write(uploaded_file.read())
-        tmp_path = tmp_file.name
+    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-    if st.button("Verify Product"):
-        try:
-            reader = easyocr.Reader(["en"], gpu=False)
-            result = reader.readtext(tmp_path, detail=0)
-            extracted_text = " ".join(result)
+    if st.button("✅ Verify Product"):
+        with st.spinner("Running OCR..."):
+            try:
+                image_bytes = uploaded_file.read()
+                extracted_text = run_ocr(image_bytes)
 
-            st.subheader("🔍 OCR Extracted Text")
-            st.write(extracted_text)
+                st.subheader("📜 Extracted Text")
+                st.text(extracted_text if extracted_text else "No text found.")
 
-            # Check against dataset
-            matched = [code for code in VALID_PRODUCTS if code in extracted_text.upper()]
+                # Compare with dataset
+                matched = dataset[dataset['product_name'].str.contains(extracted_text, case=False, na=False)]
 
-            if matched:
-                st.success(f"✅ Match Found: {VALID_PRODUCTS[matched[0]]}")
-            else:
-                st.error("❌ No match found in dataset.")
+                st.subheader("🔎 Match Result")
+                if not matched.empty:
+                    st.success(f"✅ Match Found: {matched.iloc[0]['product_name']}")
+                else:
+                    st.error("❌ No match found in dataset.")
 
-        except Exception as e:
-            st.error(f"OCR failed: {e}")
-
-    # Cleanup
-    os.remove(tmp_path)
+            except Exception as e:
+                st.error(f"OCR failed: {str(e)}")
