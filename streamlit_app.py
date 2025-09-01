@@ -1,42 +1,46 @@
 import streamlit as st
-import requests
 import pandas as pd
+import requests
 
-# Free demo API key from OCR.Space
-API_KEY = "helloworld"  # replace with your own for production
-
+# Sample dataset
 sample_data = pd.DataFrame({
-    "Brand": ["Kingfisher", "Corona", "Budweiser","Coca Cola"],
-    "Keyword": ["ORIGINAL", "MEXICO", "USA", "USA"]
+    "Brand": ["Coca Cola", "Pepsi", "Fanta"],
+    "Keyword": ["Coca Cola", "Pepsi", "Fanta"]
 })
 
-st.set_page_config(page_title="Fake Liquor Detection", page_icon="🍺")
-st.title("🍺 Fake Liquor Detection (OCR via API)")
+API_KEY = "helloworld"  # Replace with your own OCR.Space API key
 
-uploaded_file = st.file_uploader("Upload label image", type=["jpg", "jpeg", "png"])
+st.title("🚨 Product OCR Verification")
+
+uploaded_file = st.file_uploader("Upload Product Image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="Uploaded Label", use_column_width=True)
+    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
     if st.button("Verify Product"):
-        files = {'file': uploaded_file.getvalue()}
+        files = {"file": uploaded_file.getvalue()}
         response = requests.post(
             "https://api.ocr.space/parse/image",
             files=files,
             data={"apikey": API_KEY, "language": "eng"}
         )
-
         result = response.json()
-        extracted_text = result["ParsedResults"][0]["ParsedText"]
-        st.subheader("Extracted Text")
-        st.write(extracted_text)
 
-        # Check for keyword match
-        match = sample_data[sample_data["Keyword"].apply(
-            lambda x: x.upper() in extracted_text.upper()
-        )]
+        # Safe check for ParsedResults
+        parsed_results = result.get("ParsedResults")
+        if parsed_results and len(parsed_results) > 0:
+            extracted_text = parsed_results[0].get("ParsedText", "")
+            st.subheader("Extracted Text")
+            st.write(extracted_text)
 
-        if not match.empty:
-            st.success(f"✅ Verified! Matched with {match.iloc[0]['Brand']}")
+            # Compare with sample dataset
+            match = sample_data[sample_data["Keyword"].apply(
+                lambda x: x.upper() in extracted_text.upper()
+            )]
+            if not match.empty:
+                st.success(f"✅ Verified! Matched with {match.iloc[0]['Brand']}")
+            else:
+                st.error("⚠️ No match found. Possible counterfeit.")
         else:
-            st.error("⚠️ No match found. Possible counterfeit.")
+            error_msg = result.get("ErrorMessage", ["Unknown error"])[0]
+            st.error(f"❌ OCR failed: {error_msg}")
