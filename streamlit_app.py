@@ -1,44 +1,51 @@
 import streamlit as st
 import pandas as pd
-from PIL import Image
-import io
-
-st.set_page_config(page_title="OCR Product Verification", layout="centered")
-st.title("📷 OCR Product Verification")
-
-# Load dataset
-df = pd.read_csv("sample_dataset.csv")
-
-# Initialize EasyOCR once
+import numpy as np
 import easyocr
+import pytesseract
+from PIL import Image
+
+# Must be first command
+st.set_page_config(page_title="Fake Liquor Detector", layout="centered")
+
+# Load dataset (example)
+DATA_FILE = "sample_data.csv"
+data = pd.read_csv(DATA_FILE)
+
+# EasyOCR reader
 reader = easyocr.Reader(['en'], gpu=False)
 
-def run_ocr(image_bytes):
-    results = reader.readtext(image_bytes)
-    text = " ".join([res[1] for res in results])
-    return text.strip()
+st.title("🍾 Fake Liquor Detector (OCR)")
 
-# Upload image
-uploaded_file = st.file_uploader("Upload a product image", type=["jpg","jpeg","png"])
+uploaded_file = st.file_uploader("Upload Product Image", type=["jpg", "jpeg", "png"])
+
 if uploaded_file:
-    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-    if st.button("🔍 Verify Product"):
-        image_bytes = uploaded_file.read()
-        extracted_text = run_ocr(image_bytes)
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Product", use_container_width=True)
 
-        st.subheader("📑 Extracted Text")
-        st.text(extracted_text if extracted_text else "No text found.")
+    if st.button("Verify Product"):
+        ocr_text = ""
 
-        # Compare with dataset
-        match = False
-        matched_item = None
-        for product in df["product_name"]:
-            if product.lower() in extracted_text.lower():
-                match = True
-                matched_item = product
-                break
+        # Try EasyOCR first
+        try:
+            results = reader.readtext(np.array(image))
+            ocr_text = " ".join([res[1] for res in results])
+            st.success("✅ OCR via EasyOCR successful")
+        except Exception as e:
+            st.warning(f"EasyOCR failed: {e}")
+            # Fallback: pytesseract
+            try:
+                ocr_text = pytesseract.image_to_string(image)
+                st.info("⚠️ Using fallback OCR: Tesseract")
+            except Exception as e2:
+                st.error(f"OCR failed completely: {e2}")
 
-        if match:
-            st.success(f"✅ Match found: {matched_item}")
-        else:
-            st.error("❌ No match found in dataset.")
+        st.text_area("Extracted Text", ocr_text, height=120)
+
+        if ocr_text:
+            matches = data[data.apply(lambda row: row.astype(str).str.contains(ocr_text, case=False).any(), axis=1)]
+            if not matches.empty:
+                st.success("✅ Match Found in Dataset")
+                st.dataframe(matches)
+            else:
+                st.error("❌ No Match Found – Product may be fake")
