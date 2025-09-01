@@ -6,9 +6,8 @@ Pillow==10.2.0
 # Web app
 streamlit==1.32.0
 
-# OCR
+# OCR (EasyOCR only)
 easyocr==1.6.2
-pytesseract==0.3.10
 
 # Torch CPU build (safe for free Render plan)
 torch==2.1.2
@@ -16,4 +15,5 @@ torchvision==0.16.2
 
 # Utils
 cmake>=3.26
+
 
