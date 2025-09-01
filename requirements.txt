@@ -1,7 +1,6 @@
-# requirements.txt
-numpy>=1.26
-streamlit==1.36.0
-easyocr
-torch==2.6.0
-torchvision==0.21.0
-Pillow
+streamlit==1.38.0
+easyocr==1.7.1
+torch>=2.2.0
+torchvision>=0.22.0
+pandas
+
