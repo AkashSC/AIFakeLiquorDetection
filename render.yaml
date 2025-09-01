@@ -1,12 +1,13 @@
 services:
   - type: web
-    name: fake-liquor-detector
+    name: liquor-verification-app
     env: python
     plan: free
-    buildCommand: |
-      apt-get update && apt-get install -y tesseract-ocr libtesseract-dev
-      pip install --upgrade pip
-      pip install -r requirements.txt
-    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
 
 
