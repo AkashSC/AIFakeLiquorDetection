@@ -2,39 +2,44 @@ import streamlit as st
 import pandas as pd
 from PIL import Image
 import pytesseract
+import io
 
-# Load dataset
-@st.cache_data
-def load_dataset():
-    return pd.read_csv("sample_dataset.csv")
+# ✅ must be the first Streamlit command
+st.set_page_config(page_title="OCR Product Verification", layout="centered")
 
-dataset = load_dataset()
+# Load dataset (sample product names)
+DATA_FILE = "sample_dataset.csv"
+df = pd.read_csv(DATA_FILE)
 
-def run_ocr(image_file):
-    img = Image.open(image_file)
-    text = pytesseract.image_to_string(img)
-    return text.strip()
+st.title("📷 OCR Product Verification")
 
-# Streamlit UI
-st.set_page_config(page_title="🧾 Product Verification OCR", layout="centered")
-st.title("🧾 Product Verification via OCR")
+uploaded_file = st.file_uploader("Upload a product image", type=["jpg", "jpeg", "png"])
 
-uploaded_file = st.file_uploader("📤 Upload product image", type=["jpg", "jpeg", "png"])
+if uploaded_file is not None:
+    # Show image preview
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-if uploaded_file:
-    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
+    if st.button("🔍 Verify Product"):
+        try:
+            # Run OCR
+            extracted_text = pytesseract.image_to_string(image)
+            st.subheader("📑 Extracted Text:")
+            st.text(extracted_text.strip())
 
-    if st.button("✅ Verify Product"):
-        with st.spinner("Running OCR..."):
-            extracted_text = run_ocr(uploaded_file)
+            # Compare with dataset
+            match = False
+            matched_item = None
+            for product in df["product_name"]:
+                if product.lower() in extracted_text.lower():
+                    match = True
+                    matched_item = product
+                    break
 
-            st.subheader("📜 Extracted Text")
-            st.text(extracted_text if extracted_text else "No text found.")
-
-            matched = dataset[dataset['product_name'].str.contains(extracted_text, case=False, na=False)]
-
-            st.subheader("🔎 Match Result")
-            if not matched.empty:
-                st.success(f"✅ Match Found: {matched.iloc[0]['product_name']}")
+            if match:
+                st.success(f"✅ Match found: {matched_item}")
             else:
-                st.error("❌ No match found in dataset.")
+                st.error("❌ No matching product found in dataset.")
+
+        except Exception as e:
+            st.error(f"OCR failed: {e}")
