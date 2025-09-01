@@ -1,14 +1,10 @@
 services:
   - type: web
     name: product-verification-ocr
-    runtime: python
-    pythonVersion: 3.11
+    env: python
     plan: free
     buildCommand: |
       apt-get update && apt-get install -y tesseract-ocr
+      pip install --upgrade pip
       pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
-
-
-
-
