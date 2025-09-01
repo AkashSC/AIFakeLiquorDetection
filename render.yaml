@@ -1,12 +1,11 @@
 services:
   - type: web
-    name: liquor-ocr
-    env: python
+    name: product-verification-ocr
+    runtime: python
+    pythonVersion: 3.11
     plan: free
-    buildCommand: |
-      pip install --upgrade pip
-      pip install --no-cache-dir -r requirements.txt
-      python -c "import easyocr; easyocr.Reader(['en'], gpu=False)"
+    buildCommand: pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+
 
 
