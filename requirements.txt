@@ -1,15 +1,19 @@
-# Core scientific stack
+# Core scientific
 numpy>=1.24,<2.0
 pandas==2.0.3
 Pillow==10.2.0
 
-# Streamlit app
+# Web app
 streamlit==1.32.0
 
-# OCR options
+# OCR
 easyocr==1.6.2
 pytesseract==0.3.10
 
-# Torch + Vision (compatible pair for Python 3.11)
+# Torch CPU build (safe for free Render plan)
 torch==2.1.2
 torchvision==0.16.2
+
+# Utils
+cmake>=3.26
+
