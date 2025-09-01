@@ -1,19 +1,7 @@
-# Core scientific
-numpy>=1.24,<2.0
+streamlit==1.32.0
 pandas==2.0.3
 Pillow==10.2.0
+requests==2.31.0
 
-# Web app
-streamlit==1.32.0
-
-# OCR (EasyOCR only)
-easyocr==1.6.2
-
-# Torch CPU build (safe for free Render plan)
-torch==2.1.2
-torchvision==0.16.2
-
-# Utils
-cmake>=3.26
 
 
