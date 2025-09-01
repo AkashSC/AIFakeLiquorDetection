@@ -1,51 +1,31 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
 import easyocr
-import pytesseract
+import streamlit as st
 from PIL import Image
+import numpy as np
 
-# Must be first command
-st.set_page_config(page_title="Fake Liquor Detector", layout="centered")
+st.set_page_config(page_title="Fake Liquor Detection", layout="centered")
 
-# Load dataset (example)
-DATA_FILE = "sample_data.csv"
-data = pd.read_csv(DATA_FILE)
+st.title("🍾 Fake Liquor Detection with OCR")
 
-# EasyOCR reader
-reader = easyocr.Reader(['en'], gpu=False)
+# Initialize EasyOCR reader once
+reader = easyocr.Reader(['en'])
 
-st.title("🍾 Fake Liquor Detector (OCR)")
+uploaded_file = st.file_uploader("Upload product label", type=["jpg", "jpeg", "png"])
 
-uploaded_file = st.file_uploader("Upload Product Image", type=["jpg", "jpeg", "png"])
-
-if uploaded_file:
+if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Product", use_container_width=True)
+    st.image(image, caption="Uploaded Label", use_container_width=True)
 
     if st.button("Verify Product"):
-        ocr_text = ""
+        with st.spinner("Extracting text..."):
+            result = reader.readtext(np.array(image))
 
-        # Try EasyOCR first
-        try:
-            results = reader.readtext(np.array(image))
-            ocr_text = " ".join([res[1] for res in results])
-            st.success("✅ OCR via EasyOCR successful")
-        except Exception as e:
-            st.warning(f"EasyOCR failed: {e}")
-            # Fallback: pytesseract
-            try:
-                ocr_text = pytesseract.image_to_string(image)
-                st.info("⚠️ Using fallback OCR: Tesseract")
-            except Exception as e2:
-                st.error(f"OCR failed completely: {e2}")
+        extracted_text = " ".join([res[1] for res in result])
+        st.subheader("Extracted Text:")
+        st.write(extracted_text)
 
-        st.text_area("Extracted Text", ocr_text, height=120)
-
-        if ocr_text:
-            matches = data[data.apply(lambda row: row.astype(str).str.contains(ocr_text, case=False).any(), axis=1)]
-            if not matches.empty:
-                st.success("✅ Match Found in Dataset")
-                st.dataframe(matches)
-            else:
-                st.error("❌ No Match Found – Product may be fake")
+        # Dummy verification step
+        if "ORIGINAL" in extracted_text.upper():
+            st.success("✅ Product verified as authentic!")
+        else:
+            st.error("⚠️ Warning: Product may be counterfeit.")
