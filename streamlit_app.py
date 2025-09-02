@@ -6,7 +6,7 @@ import io
 # -----------------------------
 # Load dataset
 # -----------------------------
-with open("sample_data/dataset.txt", "r") as f:
+with open("dataset.txt", "r") as f:
     dataset = [line.strip() for line in f.readlines()]
 
 # -----------------------------
