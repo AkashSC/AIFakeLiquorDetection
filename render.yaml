@@ -3,8 +3,12 @@ services:
     name: ocr-product-verifier
     env: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+ buildCommand: |
+  apt-get update && apt-get install -y tesseract-ocr libtesseract-dev
+  pip install -r requirements.txt
+
+startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+
 
 
 
