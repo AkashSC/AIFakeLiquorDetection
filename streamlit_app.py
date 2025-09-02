@@ -16,24 +16,31 @@ if uploaded_file:
         st.info("Running OCR, please wait...")
 
         try:
-            # OCR.space API request
-            result = requests.post(
+            response = requests.post(
                 "https://api.ocr.space/parse/image",
                 files={"filename": uploaded_file.getvalue()},
                 data={"apikey": "helloworld", "language": "eng"}
-            ).json()
+            )
 
-            parsed_text = result.get("ParsedResults")[0].get("ParsedText", "").strip()
-            if parsed_text:
-                st.success(f"Extracted Text: {parsed_text}")
+            result = response.json()
 
-                matches = [p for p in dataset if parsed_text.lower() in p.lower()]
-                if matches:
-                    st.success(f"✅ Product matches dataset: {matches}")
+            # Check for ParsedResults existence
+            if "ParsedResults" in result and result["ParsedResults"]:
+                parsed_text = result["ParsedResults"][0].get("ParsedText", "").strip()
+
+                if parsed_text:
+                    st.success(f"Extracted Text: {parsed_text}")
+
+                    matches = [p for p in dataset if parsed_text.lower() in p.lower()]
+                    if matches:
+                        st.success(f"✅ Product matches dataset: {matches}")
+                    else:
+                        st.warning("❌ No match found in dataset.")
                 else:
-                    st.warning("❌ No match found in dataset.")
+                    st.error("OCR failed: No text detected in image.")
             else:
-                st.error("OCR failed: Unable to extract text. Make sure the image is clear and not too large.")
+                error_message = result.get("ErrorMessage", "Unknown error from OCR API")
+                st.error(f"OCR failed: {error_message}")
 
         except Exception as e:
-            st.error(f"OCR failed: {str(e)}")
+            st.error(f"OCR request failed: {str(e)}")
