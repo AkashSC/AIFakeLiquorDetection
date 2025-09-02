@@ -1,47 +1,42 @@
 import streamlit as st
+import pytesseract
 from PIL import Image
-import easyocr
-import tempfile
-import os
+import cv2
+import numpy as np
 
-st.set_page_config(page_title="OCR Product Verifier", layout="wide")
-st.title("🍾 Fake Liquor Detection - OCR Verifier")
+st.title("📝 OCR Text Extractor & Verifier")
 
-uploaded_file = st.file_uploader("📤 Upload product label image", type=["png", "jpg", "jpeg"])
+uploaded_file = st.file_uploader("Upload an image (JPG or PNG)", type=["jpg", "jpeg", "png"])
 
-if uploaded_file:
-    # Show image preview
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+sample_dataset = ["Coca Cola", "Pepsi", "Budweiser", "Jack Daniels"]
 
-    st.write("🔍 Running OCR, please wait...")
+if uploaded_file is not None:
+    st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
 
-    # Save uploaded file to a temporary location
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp_file:
-        tmp_file.write(uploaded_file.getvalue())
-        temp_path = tmp_file.name
+    st.write("⏳ Running OCR, please wait...")
 
-    # Initialize EasyOCR (English only for speed)
-    reader = easyocr.Reader(['en'], gpu=False)
+    try:
+        # Load image
+        image = Image.open(uploaded_file).convert("RGB")
+        open_cv_image = np.array(image)
+        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
 
-    # Run OCR
-    results = reader.readtext(temp_path)
+        # Extract text using Tesseract
+        extracted_text = pytesseract.image_to_string(open_cv_image)
 
-    if results:
-        extracted_text = " ".join([res[1] for res in results])
-        st.subheader("✅ OCR Extracted Text:")
-        st.code(extracted_text)
+        if extracted_text.strip():
+            st.subheader("✅ Extracted Text:")
+            st.text(extracted_text)
 
-        # Simple brand verification
-        valid_brands = ["Coca Cola", "Pepsi", "Kingfisher", "Bacardi"]
-        found = [brand for brand in valid_brands if brand.lower() in extracted_text.lower()]
+            # Verify against dataset
+            matched = [word for word in sample_dataset if word.lower() in extracted_text.lower()]
 
-        if found:
-            st.success(f"✔️ Product Verified! Matched brand(s): {', '.join(found)}")
+            if matched:
+                st.success(f"✔ Match found: {', '.join(matched)}")
+            else:
+                st.error("❌ No match found in dataset")
         else:
-            st.error("⚠️ No matching brand found. Product might be fake!")
-    else:
-        st.error("❌ No text detected in the image.")
+            st.warning("⚠ OCR failed: No text detected. Try a clearer image.")
 
-    # Clean up temp file
-    os.remove(temp_path)
+    except Exception as e:
+        st.error(f"OCR failed: {e}")
