@@ -1,13 +1,23 @@
 import streamlit as st
 import requests
+from PIL import Image
+import io
 
-st.set_page_config(page_title="Fake Liquor Detector", layout="centered")
-st.title("🍺 Fake Liquor Detection")
+# -----------------------------
+# Load dataset
+# -----------------------------
+with open("sample_data/dataset.txt", "r") as f:
+    dataset = [line.strip() for line in f.readlines()]
 
-# Sample product dataset
-dataset = ["Coca Cola", "Pepsi", "Fanta", "Sprite"]
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.set_page_config(page_title="🍺 OCR Product Verifier", page_icon="🍺")
 
-uploaded_file = st.file_uploader("Upload product image (jpg/png)", type=["jpg", "png"])
+st.title("🍺 OCR Product Verifier")
+st.write("Upload a product image, and we'll check if it matches our dataset.")
+
+uploaded_file = st.file_uploader("Upload Image", type=["jpg","jpeg","png"])
 
 if uploaded_file:
     st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
@@ -16,15 +26,20 @@ if uploaded_file:
         st.info("Running OCR, please wait...")
 
         try:
+            # Send the file with proper filename and content type
+            files = {
+                "filename": (uploaded_file.name, uploaded_file, uploaded_file.type)
+            }
+            data = {"apikey": "helloworld", "language": "eng"}
+
             response = requests.post(
                 "https://api.ocr.space/parse/image",
-                files={"filename": uploaded_file.getvalue()},
-                data={"apikey": "helloworld", "language": "eng"}
+                files=files,
+                data=data
             )
 
             result = response.json()
 
-            # Check for ParsedResults existence
             if "ParsedResults" in result and result["ParsedResults"]:
                 parsed_text = result["ParsedResults"][0].get("ParsedText", "").strip()
 
