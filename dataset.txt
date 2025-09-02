@@ -1,6 +1,5 @@
-Product
 Coca Cola
 Pepsi
-Fanta
 Sprite
-
+Fanta
+Mountain Dew
