@@ -1,27 +1,42 @@
 import streamlit as st
 from PIL import Image
-import pytesseract
+import easyocr
 
-st.title("📷 OCR Test")
+# Streamlit page setup
+st.set_page_config(page_title="OCR Product Verifier", layout="wide")
 
-# Upload image
-uploaded_file = st.file_uploader("Upload an image", type=["png", "jpg", "jpeg"])
+st.title("🍾 Fake Liquor Detection - OCR Verifier")
 
-if uploaded_file is not None:
-    # Open as PIL image
+# File upload
+uploaded_file = st.file_uploader("📤 Upload product label image", type=["png", "jpg", "jpeg"])
+
+if uploaded_file:
+    # Show uploaded image
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    try:
-        # Extract text
-        extracted_text = pytesseract.image_to_string(image)
+    st.write("🔍 Running OCR, please wait...")
 
-        if extracted_text.strip():
-            st.success("✅ OCR Success")
-            st.write("Extracted Text:")
-            st.code(extracted_text)
+    # Initialize EasyOCR (English only to keep it fast)
+    reader = easyocr.Reader(['en'], gpu=False)
+
+    # Run OCR on the uploaded image
+    results = reader.readtext(uploaded_file.getvalue())
+
+    if results:
+        extracted_text = " ".join([res[1] for res in results])
+        st.subheader("✅ OCR Extracted Text:")
+        st.code(extracted_text)
+
+        # --- Simple verification logic (sample dataset) ---
+        # Imagine we have a list of valid brand names
+        valid_brands = ["Coca Cola", "Pepsi", "Kingfisher", "Bacardi"]
+
+        found = [brand for brand in valid_brands if brand.lower() in extracted_text.lower()]
+
+        if found:
+            st.success(f"✔️ Product Verified! Matched brand(s): {', '.join(found)}")
         else:
-            st.error("⚠️ OCR failed. Image might be unclear or empty text.")
-
-    except Exception as e:
-        st.error(f"OCR Error: {e}")
+            st.error("⚠️ No matching brand found. Product might be fake!")
+    else:
+        st.error("❌ No text detected in the image.")
