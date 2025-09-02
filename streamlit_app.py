@@ -1,39 +1,52 @@
 import streamlit as st
-import easyocr
-from PIL import Image
-import numpy as np
-import cv2
+import requests
+import pandas as pd
 
-st.title("📝 OCR Text Extractor & Verifier (EasyOCR)")
+# -----------------------------
+# Config
+# -----------------------------
+st.set_page_config(page_title="Fake Liquor Detector", layout="centered")
 
-uploaded_file = st.file_uploader("Upload an image (JPG or PNG)", type=["jpg", "jpeg", "png"])
+OCR_API_KEY = "helloworld"  # Free test key from OCR.space
 
-sample_dataset = ["Coca Cola", "Pepsi", "Budweiser", "Jack Daniels"]
+# -----------------------------
+# Sample dataset
+# -----------------------------
+# Example CSV with product names
+data = pd.DataFrame({
+    "Product": ["Coca Cola", "Pepsi", "Fanta", "Sprite"]
+})
 
-reader = easyocr.Reader(['en'])  # English
+st.title("🍺 Fake Liquor Detection (OCR)")
 
-if uploaded_file is not None:
+uploaded_file = st.file_uploader("Upload product image (jpg/png)", type=["jpg", "png"])
+
+if uploaded_file:
     st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
-    st.write("⏳ Running OCR, please wait...")
 
-    try:
-        image = Image.open(uploaded_file).convert("RGB")
-        open_cv_image = np.array(image)
-        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
+    if st.button("Verify Product"):
+        st.info("Running OCR, please wait...")
 
-        results = reader.readtext(open_cv_image)
-        extracted_text = " ".join([res[1] for res in results])
+        # Send image to OCR.space
+        result = requests.post(
+            "https://api.ocr.space/parse/image",
+            files={"filename": uploaded_file.getvalue()},
+            data={"apikey": OCR_API_KEY, "language": "eng"}
+        ).json()
 
-        if extracted_text.strip():
-            st.subheader("✅ Extracted Text:")
-            st.text(extracted_text)
+        # Extract text safely
+        parsed_text = ""
+        try:
+            parsed_text = result.get("ParsedResults")[0].get("ParsedText", "")
+        except Exception:
+            st.error("OCR failed. Make sure the image is clear and not too large.")
 
-            matched = [word for word in sample_dataset if word.lower() in extracted_text.lower()]
-            if matched:
-                st.success(f"✔ Match found: {', '.join(matched)}")
+        if parsed_text:
+            st.success(f"Extracted Text: {parsed_text}")
+
+            # Check matching with dataset
+            matches = data[data["Product"].str.contains(parsed_text.strip(), case=False)]
+            if not matches.empty:
+                st.success(f"✅ Product matches dataset: {matches['Product'].tolist()}")
             else:
-                st.error("❌ No match found in dataset")
-        else:
-            st.warning("⚠ OCR failed: No text detected. Try a clearer image.")
-    except Exception as e:
-        st.error(f"OCR failed: {e}")
+                st.warning("❌ No match found in dataset.")
